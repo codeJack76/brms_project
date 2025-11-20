@@ -19,15 +19,24 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await signIn(email, password);
+      // Call the login API directly with email and password
+      const response = await fetch('/api/auth/login-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
       
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
+      if (!response.ok) {
+        if (data.error?.includes('Invalid login credentials')) {
           setError('Invalid email or password');
-        } else if (error.message.includes('Email not confirmed')) {
+        } else if (data.error?.includes('Email not confirmed')) {
           setError('Please confirm your email address');
         } else {
-          setError(error.message);
+          setError(data.error || 'An error occurred during sign in');
         }
         setIsSubmitting(false);
         return;
