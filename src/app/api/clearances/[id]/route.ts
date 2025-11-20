@@ -14,10 +14,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // GET /api/clearances/[id] - Fetch a single clearance
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const { data: clearance, error } = await supabaseAdmin
       .from('clearances')
@@ -78,10 +78,10 @@ export async function GET(
 // PUT /api/clearances/[id] - Update a clearance
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const updateData: any = {
@@ -173,10 +173,10 @@ export async function PUT(
 // DELETE /api/clearances/[id] - Delete a clearance
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const { error } = await supabaseAdmin
       .from('clearances')

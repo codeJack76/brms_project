@@ -10,10 +10,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 // GET - Fetch a single resident by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabaseAdmin
       .from('residents')
@@ -49,10 +49,10 @@ export async function GET(
 // PUT - Update a resident by ID (with barangay validation)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const {
@@ -164,10 +164,10 @@ export async function PUT(
 // DELETE - Delete a resident by ID (with barangay validation)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Get user email from cookie
     const userEmail = request.cookies.get('user_email')?.value;
