@@ -201,7 +201,7 @@ Categorize any issues found:
 - **Table Structure**: All domain tables reference `barangays(id)` via `barangay_id`
 - **Auto-Population**: `set_barangay_id()` trigger automatically sets `barangay_id` from `get_current_user_barangay()` on INSERT
 - **RLS Enforcement**: Users can only SELECT/UPDATE/DELETE rows where `barangay_id = get_current_user_barangay()` OR user `is_superadmin()`
-- **Auth Flow**: `users.auth0_id` stores Supabase `auth.uid()` as TEXT (not UUID) - this is intentional for compatibility
+- **Auth Flow**: `users.auth0_id` (legacy column name) stores Supabase `auth.uid()` as TEXT (not UUID) - column kept for backward compatibility
 
 ### Database Schema (14 Tables)
 Core entities: `barangays`, `users`, `residents`, `households`, `household_members`, `documents`, `files`, `clearances`, `blotter_records`, `financial_transactions`, `reports`, `settings`, `user_invitations`, `audit_logs`
@@ -215,13 +215,15 @@ Core entities: `barangays`, `users`, `residents`, `households`, `household_membe
 - Snake_case naming in database, camelCase in TypeScript
 
 ### Authentication Architecture
-- **Supabase Auth** replaces Auth0 (migration complete, `auth0-lock` package remains in dependencies but UNUSED)
-- **Invitation-Only**: Users must have valid invitation token to sign up
+- **Supabase Auth**: Primary authentication system using email/password
+- **Invitation-Only**: Users must have valid invitation token in `user_invitations` table to sign up
 - **First User Rule**: First signup automatically becomes `superadmin` with `barangay_id=NULL` for cross-tenant access
-- **Auth Trigger**: `handle_new_user()` creates user record from invitation or makes first user superadmin
+- **Auth Trigger**: `handle_new_user()` PostgreSQL function creates user record from invitation or makes first user superadmin
 - **Session Management**: `AuthContext` (`src/app/context/AuthContext.tsx`) wraps entire app in `layout.tsx`, provides `useAuth()` hook
-- **User Lookup**: Database stores `users.auth0_id` as TEXT (not UUID) containing Supabase `auth.uid()` value
-- **Auth Check Pattern**: RLS policies use `auth.uid()::TEXT` compared with `users.auth0_id`
+- **User Identification**: Database column `users.auth0_id` (legacy name from migration) stores Supabase `auth.uid()` as TEXT (not UUID)
+- **RLS Pattern**: Policies use `auth.uid()::TEXT` compared with `users.auth0_id` for row-level security checks
+
+**Legacy Note**: Column named `auth0_id` for backward compatibility from previous Auth0 implementation. All references to "auth0" in code/database refer to Supabase Auth - DO NOT use actual Auth0 services.
 
 ### Role-Based Access Control (RBAC)
 6 roles with hierarchical permissions defined in `RBACContext.tsx`:
@@ -237,6 +239,80 @@ Core entities: `barangays`, `users`, `residents`, `households`, `household_membe
 const { hasPermission } = useRBAC();
 if (hasPermission('canManageResidents')) { /* show UI */ }
 ```
+
+---
+
+## 🔐 Authentication Deep Dive
+
+### Current System: Supabase Auth
+
+**THIS PROJECT USES SUPABASE AUTH ONLY** - No Auth0, no third-party providers.
+
+#### Sign Up Flow (Invitation-Only)
+1. Admin creates invitation via `POST /api/users/invite` → generates token in `user_invitations` table
+2. New user receives invitation link: `/signup?token={invitation_token}`
+3. User enters email/password, submits to Supabase Auth
+4. `handle_new_user()` trigger fires on `auth.users` insert:
+   - Looks up invitation by email
+   - Creates record in `public.users` with `barangay_id` from invitation
+   - OR makes first user `superadmin` with `barangay_id=NULL`
+5. User redirected to dashboard with session
+
+#### Sign In Flow
+1. User submits email/password to `supabase.auth.signInWithPassword()`
+2. Supabase returns session with JWT containing `sub` claim (user ID)
+3. `AuthContext` sets user state, `RBACContext` fetches user details from `public.users`
+4. `update_user_last_login()` trigger updates `last_login_at`
+
+#### Session Management
+- **Client**: `AuthContext` listens to `supabase.auth.onAuthStateChange()`
+- **Server**: API routes read session from request headers automatically
+- **RLS**: `auth.uid()` in policies returns current user's ID from JWT
+
+#### Important Auth Implementation Details
+
+**Database Column**: `users.auth0_id`
+- **Type**: `VARCHAR(255)` (TEXT, not UUID)
+- **Contains**: Supabase `auth.uid()` value
+- **Why "auth0"**: Legacy naming from previous Auth0 implementation (do NOT use Auth0 services)
+- **Usage**: `WHERE auth0_id = auth.uid()::TEXT` in RLS policies
+
+**Auth Functions** (`src/app/context/AuthContext.tsx`):
+```typescript
+const { user, session, loading, signIn, signUp, signOut, resetPassword } = useAuth();
+
+// Sign in
+await signIn(email, password);
+
+// Sign up (requires valid invitation token in URL)
+await signUp(email, password, name);
+
+// Sign out
+await signOut(); // Clears session, redirects to landing
+
+// Password reset
+await resetPassword(email); // Sends magic link
+```
+
+**Protected Routes Pattern**:
+```tsx
+// In page component
+const { user, loading } = useAuth();
+
+if (loading) return <LoadingSpinner />;
+if (!user) return <Navigate to="/login" />; // Or LandingPage
+
+// Render protected content
+```
+
+**Auth Environment Variables**:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://{project}.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY={anon_key}
+SUPABASE_SERVICE_ROLE_KEY={service_role_key}  # Server-side only
+```
+
+---
 
 ## File Conventions & Patterns
 
@@ -379,7 +455,7 @@ Common issues:
 - **"No valid invitation"**: Check `user_invitations` table has `status='pending'` and `expires_at > NOW()`
 - **"Barangay_id null"**: Ensure user record has `barangay_id` set, triggers might not have fired, or user is first superadmin
 - **"Access denied"**: Check RLS policies in Dashboard → Database → Policies, verify user's role and barangay_id
-- **"Auth0_id mismatch"**: Verify `users.auth0_id` (TEXT) matches Supabase `auth.uid()` value exactly
+- **"User ID mismatch"**: Verify `users.auth0_id` (TEXT, legacy column name) matches Supabase `auth.uid()` value exactly
 
 **Debug Tools**:
 ```powershell
@@ -490,12 +566,12 @@ Files stored in **Supabase Storage** with metadata in `files` table:
 - **TypeScript ^5**: Type safety
 
 ### Legacy Dependencies
-- **auth0-lock ^14.1.0**: UNUSED - kept for migration history, DO NOT USE
+- **auth0-lock ^14.1.0**: REMOVED from active use - kept in package.json for migration history only. All authentication uses Supabase Auth. DO NOT import or use Auth0 in new code.
 
 ### External Services
 1. **Supabase** (Primary backend):
    - PostgreSQL database with RLS
-   - Authentication (email/password, magic links)
+   - Authentication (email/password, invitation-based signup)
    - Storage (multi-tenant file storage)
    - Real-time subscriptions (not currently used)
    - Edge Functions (not currently used)
@@ -546,8 +622,8 @@ Consistent response structure:
 
 ## Critical "Gotchas"
 
-1. **Auth0 Package Still Present**: `auth0-lock` in dependencies but NOT USED - app uses Supabase Auth exclusively
-2. **auth0_id is TEXT not UUID**: Database stores Supabase user.id as TEXT in `users.auth0_id` for compatibility (intentional naming for migration history)
+1. **Legacy Column Naming**: `users.auth0_id` column name is from previous Auth0 migration - it now stores Supabase `auth.uid()`. DO NOT use Auth0 services.
+2. **User ID is TEXT not UUID**: `users.auth0_id` stores Supabase user ID as TEXT (not UUID) for compatibility - use `auth.uid()::TEXT` in RLS policies
 3. **RLS Functions Use SECURITY DEFINER**: Helper functions like `get_current_user_barangay()` must be SECURITY DEFINER to access `auth.uid()`
 4. **First User Auto-Superadmin**: First signup has `barangay_id=NULL` and `role='superadmin'` - can see all barangays
 5. **Trigger-Based barangay_id**: Never manually set `barangay_id` in INSERT statements - `set_barangay_id()` trigger handles it automatically
