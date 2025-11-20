@@ -1,6 +1,7 @@
 [build]
-  command = "npm run build"
-  publish = ".next"
+  base = "brms_project"
+  command = "npm install && npm run build"
+  publish = "brms_project/.next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
