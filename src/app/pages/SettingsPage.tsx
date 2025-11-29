@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, User, Shield, Globe, Save, Eye, EyeOff, Users, Mail, Send, Copy, CheckCircle, Bell, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Settings, User, Shield, Globe, Save, Users, Mail, Send, Copy, CheckCircle, Bell } from 'lucide-react';
 
 interface SettingsPageProps {
   userRole?: string;
@@ -10,7 +9,6 @@ interface SettingsPageProps {
 
 export default function SettingsPage({ userRole = 'staff' }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState('general');
-  const { theme, toggleTheme } = useTheme();
   
   // Barangay settings
   const [barangayId, setBarangayId] = useState('');
@@ -25,10 +23,15 @@ export default function SettingsPage({ userRole = 'staff' }: SettingsPageProps) 
   const [isEditingBarangay, setIsEditingBarangay] = useState(false);
   
   // Profile settings
-  const [fullName, setFullName] = useState('Admin User');
-  const [position, setPosition] = useState('Barangay Captain');
-  const [userEmail, setUserEmail] = useState('admin@example.com');
-  const [showPassword, setShowPassword] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileRole, setProfileRole] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profilePosition, setProfilePosition] = useState('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState('');
+  const [profileSaveError, setProfileSaveError] = useState('');
 
   // Admin Users - Invitation Management
   const [inviteEmail, setInviteEmail] = useState('');
@@ -187,6 +190,32 @@ export default function SettingsPage({ userRole = 'staff' }: SettingsPageProps) 
     };
     loadMembers();
   }, [activeTab, barangayId, userRole]);
+
+  // Load profile data when Profile tab is active
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (activeTab === 'profile') {
+        setIsLoadingProfile(true);
+        try {
+          const res = await fetch('/api/users/profile');
+          const data = await res.json();
+          
+          if (res.ok && data.user) {
+            setProfileName(data.user.name || '');
+            setProfileEmail(data.user.email || '');
+            setProfileRole(data.user.role || '');
+            setProfilePhone(data.user.metadata?.phone || '');
+            setProfilePosition(data.user.metadata?.position || '');
+          }
+        } catch (error) {
+          console.error('Error loading profile:', error);
+        } finally {
+          setIsLoadingProfile(false);
+        }
+      }
+    };
+    loadProfile();
+  }, [activeTab]);
 
   const handleInviteUser = async () => {
     setInviteError('');
@@ -359,24 +388,9 @@ export default function SettingsPage({ userRole = 'staff' }: SettingsPageProps) 
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage your application settings and preferences</p>
-        </div>
-        
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-        >
-          {theme === 'light' ? (
-            <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          ) : (
-            <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          )}
-        </button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage your application settings and preferences</p>
       </div>
 
       <div className="flex gap-6 h-[calc(100vh-12rem)]">
@@ -711,78 +725,197 @@ export default function SettingsPage({ userRole = 'staff' }: SettingsPageProps) 
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Profile Settings</h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">Update your personal information</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Profile Settings</h2>
+                  <p className="text-gray-600 dark:text-gray-400">View and update your personal information</p>
                 </div>
 
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <User className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+                {isLoadingProfile ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading profile...</span>
                   </div>
-                  <div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mb-2">
-                      Change Photo
-                    </button>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">JPG, PNG or GIF. Max size 2MB</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Position
-                    </label>
-                    <input
-                      type="text"
-                      value={position}
-                      onChange={(e) => setPosition(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Change Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter new password"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                      <button
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
+                ) : (
+                  <>
+                    {/* Profile Avatar */}
+                    <div className="flex items-center gap-6 mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                        <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                          {profileName ? profileName.charAt(0).toUpperCase() : profileEmail.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                          {profileName || 'No name set'}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400">{profileEmail}</p>
+                        <span className="inline-block mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full capitalize">
+                          {profileRole?.replace('_', ' ')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* Profile Form */}
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Personal Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Full Name
+                          </label>
+                          <input
+                            type="text"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                            placeholder="Enter your full name"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            value={profileEmail}
+                            disabled
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed"
+                          />
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Email cannot be changed
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Position/Title
+                          </label>
+                          <input
+                            type="text"
+                            value={profilePosition}
+                            onChange={(e) => setProfilePosition(e.target.value)}
+                            placeholder="e.g., Barangay Secretary"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            value={profilePhone}
+                            onChange={(e) => setProfilePhone(e.target.value)}
+                            placeholder="+63 XXX XXX XXXX"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Role
+                          </label>
+                          <input
+                            type="text"
+                            value={profileRole?.replace('_', ' ')}
+                            disabled
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 dark:text-gray-300 cursor-not-allowed capitalize"
+                          />
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Contact admin to change role
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Success/Error Messages */}
+                      {profileSaveSuccess && (
+                        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            {profileSaveSuccess}
+                          </p>
+                        </div>
+                      )}
+
+                      {profileSaveError && (
+                        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <p className="text-sm text-red-800 dark:text-red-200">{profileSaveError}</p>
+                        </div>
+                      )}
+
+                      {/* Save Button */}
+                      <div className="mt-6 flex justify-end">
+                        <button
+                          onClick={async () => {
+                            setIsSavingProfile(true);
+                            setProfileSaveError('');
+                            setProfileSaveSuccess('');
+                            
+                            try {
+                              const res = await fetch('/api/users/profile', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  name: profileName,
+                                  metadata: {
+                                    phone: profilePhone,
+                                    position: profilePosition,
+                                  },
+                                }),
+                              });
+                              
+                              const data = await res.json();
+                              
+                              if (res.ok) {
+                                setProfileSaveSuccess('Profile updated successfully!');
+                                setTimeout(() => setProfileSaveSuccess(''), 3000);
+                              } else {
+                                setProfileSaveError(data.error || 'Failed to update profile');
+                              }
+                            } catch (error) {
+                              setProfileSaveError('An error occurred while saving');
+                            } finally {
+                              setIsSavingProfile(false);
+                            }
+                          }}
+                          disabled={isSavingProfile}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {isSavingProfile ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Saving...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-5 h-5" />
+                              <span>Save Profile</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Account Info Card */}
+                    <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        Account Security
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        To change your password, use the &quot;Forgot Password&quot; option on the login page. 
+                        A password reset link will be sent to your email address.
+                      </p>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Last login: Recently
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

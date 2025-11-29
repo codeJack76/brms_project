@@ -1,7 +1,7 @@
 -- Create clearances table
 CREATE TABLE IF NOT EXISTS public.clearances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    barangay_id UUID NOT NULL,
+    barangay_id UUID NOT NULL REFERENCES public.barangays(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     clearance_number TEXT UNIQUE, -- Auto-generated clearance number
     
     -- Resident Information
@@ -198,23 +198,8 @@ SELECT
     c.cedula_number,
     c.remarks,
     c.created_at,
-    c.updated_at,
-    r.first_name,
-    r.middle_name,
-    r.last_name,
-    r.suffix,
-    r.date_of_birth,
-    r.gender,
-    r.civil_status,
-    r.phone,
-    r.mobile,
-    r.email,
-    r.house_number,
-    r.street,
-    r.purok,
-    r.barangay
-FROM public.clearances c
-LEFT JOIN public.residents r ON c.resident_id = r.id;
+    c.updated_at
+FROM public.clearances c;
 
 -- Grant permissions to authenticated users
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.clearances TO authenticated;

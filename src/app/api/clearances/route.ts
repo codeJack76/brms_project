@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -11,13 +13,50 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// GET /api/clearances - Fetch all clearances
+// Helper function to get user's barangay_id from cookie
+async function getUserBarangay(request: NextRequest) {
+  const userEmail = request.cookies.get('user_email')?.value;
+  
+  if (!userEmail) {
+    return { error: 'Unauthorized - Please log in', status: 401 };
+  }
+
+  const { data: userData, error: userError } = await supabaseAdmin
+    .from('users')
+    .select('barangay_id, role')
+    .eq('email', userEmail)
+    .single();
+
+  if (userError) {
+    console.error('Error fetching user:', userError);
+    return { error: 'Failed to fetch user information', status: 500 };
+  }
+
+  return { userData, userEmail };
+}
+
+// GET /api/clearances - Fetch clearances filtered by user's barangay
 export async function GET(request: NextRequest) {
   try {
-    const { data: clearances, error } = await supabaseAdmin
+    const userResult = await getUserBarangay(request);
+    
+    if ('error' in userResult) {
+      return NextResponse.json({ error: userResult.error }, { status: userResult.status });
+    }
+
+    const { userData } = userResult;
+
+    let query = supabaseAdmin
       .from('clearances')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Superadmin can see all clearances, others only see their barangay's clearances
+    if (userData.role !== 'superadmin' && userData.barangay_id) {
+      query = query.eq('barangay_id', userData.barangay_id);
+    }
+
+    const { data: clearances, error } = await query;
 
     if (error) {
       console.error('Supabase error:', error);
@@ -27,34 +66,22 @@ export async function GET(request: NextRequest) {
     // Transform snake_case to camelCase for frontend
     const transformedClearances = clearances?.map((clearance: any) => ({
       id: clearance.id,
-      documentNumber: clearance.document_number,
+      barangayId: clearance.barangay_id,
+      clearanceNumber: clearance.clearance_number,
       residentId: clearance.resident_id,
       residentName: clearance.resident_name,
-      purpose: clearance.purpose,
-      validityPeriod: clearance.validity_period,
-      issueDate: clearance.issue_date,
-      expiryDate: clearance.expiry_date,
+      typeOfClearance: clearance.type_of_clearance,
+      purposeOfClearance: clearance.purpose_of_clearance,
+      dateRequested: clearance.date_requested,
+      dateApproved: clearance.date_approved,
+      dateReleased: clearance.date_released,
       status: clearance.status,
-      requestedDate: clearance.requested_date,
-      requestDate: clearance.request_date,
-      approvedDate: clearance.approved_date,
-      approvedBy: clearance.approved_by,
-      issuedBy: clearance.issued_by,
-      processedBy: clearance.processed_by,
-      feeAmount: clearance.fee_amount,
-      orNumber: clearance.or_number,
-      paymentDate: clearance.payment_date,
-      paymentStatus: clearance.payment_status,
-      remarks: clearance.remarks,
-      clearanceType: clearance.clearance_type,
+      processingOfficer: clearance.processing_officer,
+      clearanceFeePaid: clearance.clearance_fee_paid,
+      amountPaid: clearance.amount_paid,
+      requestPaid: clearance.request_paid,
       cedulaNumber: clearance.cedula_number,
-      cedulaDate: clearance.cedula_date,
-      cedulaPlace: clearance.cedula_place,
-      hasPendingCase: clearance.has_pending_case,
-      caseDetails: clearance.case_details,
-      clearanceStatus: clearance.clearance_status,
-      verifiedBy: clearance.verified_by,
-      verifiedDate: clearance.verified_date,
+      remarks: clearance.remarks,
       createdAt: clearance.created_at,
       updatedAt: clearance.updated_at,
     })) || [];
@@ -69,46 +96,47 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/clearances - Create a new clearance
+// POST /api/clearances - Create a new clearance (automatically assigns user's barangay_id)
 export async function POST(request: NextRequest) {
   try {
+    const userResult = await getUserBarangay(request);
+    
+    if ('error' in userResult) {
+      return NextResponse.json({ error: userResult.error }, { status: userResult.status });
+    }
+
+    const { userData } = userResult;
     const body = await request.json();
 
     // Validate required fields
-    if (!body.resident_name || !body.clearance_type) {
+    if (!body.resident_name || !body.type_of_clearance) {
       return NextResponse.json(
-        { error: 'Missing required fields: resident_name and clearance_type are required' },
+        { error: 'Missing required fields: resident_name and type_of_clearance are required' },
         { status: 400 }
       );
     }
 
-    // Get barangay_id from session or use default (you may need to implement proper auth)
-    const barangayId = body.barangay_id || '00000000-0000-0000-0000-000000000001';
+    // Use user's barangay_id (required for data isolation)
+    if (!userData.barangay_id) {
+      return NextResponse.json(
+        { error: 'User is not assigned to a barangay' },
+        { status: 400 }
+      );
+    }
 
     const clearanceData = {
-      barangay_id: barangayId,
+      barangay_id: userData.barangay_id,
       resident_id: body.resident_id || null,
       resident_name: body.resident_name,
-      clearance_type: body.clearance_type,
-      purpose: body.purpose || '',
-      validity_period: body.validity_period || 6,
+      type_of_clearance: body.type_of_clearance,
+      purpose_of_clearance: body.purpose_of_clearance || '',
       status: body.status || 'Pending',
-      requested_date: body.requested_date || new Date().toISOString(),
-      request_date: body.request_date || new Date().toISOString(),
-      processed_by: body.processed_by || 'System',
-      fee_amount: body.fee_amount || 0,
-      or_number: body.or_number || null,
-      payment_date: body.payment_date || null,
-      payment_status: body.payment_status || 'Unpaid',
-      remarks: body.remarks || null,
+      processing_officer: body.processing_officer || null,
+      clearance_fee_paid: body.clearance_fee_paid || false,
+      amount_paid: body.amount_paid || 0,
+      request_paid: body.request_paid || false,
       cedula_number: body.cedula_number || null,
-      cedula_date: body.cedula_date || null,
-      cedula_place: body.cedula_place || null,
-      has_pending_case: body.has_pending_case || false,
-      case_details: body.case_details || null,
-      clearance_status: body.clearance_status || 'Pending',
-      verified_by: body.verified_by || null,
-      verified_date: body.verified_date || null,
+      remarks: body.remarks || null,
     };
 
     const { data: clearance, error } = await supabaseAdmin
@@ -125,34 +153,22 @@ export async function POST(request: NextRequest) {
     // Transform response to camelCase
     const transformedClearance = {
       id: clearance.id,
-      documentNumber: clearance.document_number,
+      barangayId: clearance.barangay_id,
+      clearanceNumber: clearance.clearance_number,
       residentId: clearance.resident_id,
       residentName: clearance.resident_name,
-      purpose: clearance.purpose,
-      validityPeriod: clearance.validity_period,
-      issueDate: clearance.issue_date,
-      expiryDate: clearance.expiry_date,
+      typeOfClearance: clearance.type_of_clearance,
+      purposeOfClearance: clearance.purpose_of_clearance,
+      dateRequested: clearance.date_requested,
+      dateApproved: clearance.date_approved,
+      dateReleased: clearance.date_released,
       status: clearance.status,
-      requestedDate: clearance.requested_date,
-      requestDate: clearance.request_date,
-      approvedDate: clearance.approved_date,
-      approvedBy: clearance.approved_by,
-      issuedBy: clearance.issued_by,
-      processedBy: clearance.processed_by,
-      feeAmount: clearance.fee_amount,
-      orNumber: clearance.or_number,
-      paymentDate: clearance.payment_date,
-      paymentStatus: clearance.payment_status,
-      remarks: clearance.remarks,
-      clearanceType: clearance.clearance_type,
+      processingOfficer: clearance.processing_officer,
+      clearanceFeePaid: clearance.clearance_fee_paid,
+      amountPaid: clearance.amount_paid,
+      requestPaid: clearance.request_paid,
       cedulaNumber: clearance.cedula_number,
-      cedulaDate: clearance.cedula_date,
-      cedulaPlace: clearance.cedula_place,
-      hasPendingCase: clearance.has_pending_case,
-      caseDetails: clearance.case_details,
-      clearanceStatus: clearance.clearance_status,
-      verifiedBy: clearance.verified_by,
-      verifiedDate: clearance.verified_date,
+      remarks: clearance.remarks,
       createdAt: clearance.created_at,
       updatedAt: clearance.updated_at,
     };

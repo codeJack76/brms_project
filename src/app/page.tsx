@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sun, Moon, User, ChevronDown, LogOut, Home } from 'lucide-react';
+import { User, ChevronDown, LogOut, Home } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 import { hasPageAccess, getAccessiblePages, getDefaultPage, PageId } from '@/lib/rbac';
 
@@ -18,7 +18,7 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [showDashboard, setShowDashboard] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [currentPage, setCurrentPage] = useState<PageId>('dashboard');
@@ -236,28 +236,11 @@ export default function App() {
               </div>
             )}
           </div>
-
-          <button
-            onClick={toggleTheme}
-            className="w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
-          >
-            {theme === 'light' ? (
-              <>
-                <Moon className="w-5 h-5" />
-                <span>Dark Mode</span>
-              </>
-            ) : (
-              <>
-                <Sun className="w-5 h-5" />
-                <span>Light Mode</span>
-              </>
-            )}
-          </button>
         </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
-        {currentPage === 'dashboard' && <Dashboard />}
+        {currentPage === 'dashboard' && <Dashboard onNavigate={setCurrentPage} />}
         {currentPage === 'residents' && <ResidentsPage />}
         {currentPage === 'documents' && <DocumentsPage />}
         {currentPage === 'clearances' && <ClearancesPage />}

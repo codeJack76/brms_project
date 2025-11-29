@@ -617,6 +617,99 @@ export interface Database {
           updated_at?: string;
         };
       };
+      barangay_folders: {
+        Row: {
+          id: string;
+          barangay_id: string;
+          folder_name: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          barangay_id: string;
+          folder_name: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          barangay_id?: string;
+          folder_name?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+      };
+      barangay_documents: {
+        Row: {
+          id: string;
+          barangay_id: string;
+          folder_id: string;
+          file_name: string;
+          file_url: string;
+          file_type: string | null;
+          file_size: number | null;
+          storage_path: string;
+          uploaded_by: string;
+          uploaded_at: string;
+        };
+        Insert: {
+          id?: string;
+          barangay_id: string;
+          folder_id: string;
+          file_name: string;
+          file_url: string;
+          file_type?: string | null;
+          file_size?: number | null;
+          storage_path: string;
+          uploaded_by: string;
+          uploaded_at?: string;
+        };
+        Update: {
+          id?: string;
+          barangay_id?: string;
+          folder_id?: string;
+          file_name?: string;
+          file_url?: string;
+          file_type?: string | null;
+          file_size?: number | null;
+          storage_path?: string;
+          uploaded_by?: string;
+          uploaded_at?: string;
+        };
+      };
+      barangay_activity_logs: {
+        Row: {
+          id: string;
+          barangay_id: string;
+          action: string;
+          user_id: string;
+          document_id: string | null;
+          folder_id: string | null;
+          timestamp: string;
+          details: Json | null;
+        };
+        Insert: {
+          id?: string;
+          barangay_id: string;
+          action: string;
+          user_id: string;
+          document_id?: string | null;
+          folder_id?: string | null;
+          timestamp?: string;
+          details?: Json | null;
+        };
+        Update: {
+          id?: string;
+          barangay_id?: string;
+          action?: string;
+          user_id?: string;
+          document_id?: string | null;
+          folder_id?: string | null;
+          timestamp?: string;
+          details?: Json | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

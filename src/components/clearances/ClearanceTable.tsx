@@ -1,4 +1,4 @@
-import { Eye, Edit, Printer, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, Edit, Printer, Trash2, Clock, CheckCircle, XCircle, ArrowUpDown } from 'lucide-react';
 
 interface Clearance {
   id: string;
@@ -34,8 +34,14 @@ interface Clearance {
   updatedAt?: string;
 }
 
+export type SortField = 'documentNumber' | 'residentName' | 'clearanceType' | 'feeAmount' | 'status';
+export type SortDirection = 'asc' | 'desc';
+
 interface ClearanceTableProps {
   clearances: Clearance[];
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField) => void;
   onView: (clearance: Clearance) => void;
   onEdit: (clearance: Clearance) => void;
   onDelete: (clearance: Clearance) => void;
@@ -44,6 +50,9 @@ interface ClearanceTableProps {
 
 export default function ClearanceTable({
   clearances,
+  sortField,
+  sortDirection,
+  onSort,
   onView,
   onEdit,
   onDelete,
@@ -52,15 +61,15 @@ export default function ClearanceTable({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Approved':
-        return 'bg-green-100 dark:bg-green-900/30 text-green-700';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'Pending':
-        return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'Released':
-        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'Rejected':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
       default:
-        return 'bg-gray-100 dark:bg-gray-700 text-gray-700';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -69,7 +78,7 @@ export default function ClearanceTable({
       case 'Approved':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'Pending':
-        return <Clock className="w-4 h-4 text-orange-600" />;
+        return <Clock className="w-4 h-4 text-yellow-600" />;
       case 'Released':
         return <CheckCircle className="w-4 h-4 text-blue-600" />;
       case 'Rejected':
@@ -79,90 +88,115 @@ export default function ClearanceTable({
     }
   };
 
-  if (clearances.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-        <p className="text-gray-500 dark:text-gray-400">No clearances found. Create your first clearance request.</p>
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <th
+      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+      onClick={() => onSort?.(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {onSort && (
+          <>
+            <ArrowUpDown className={`w-4 h-4 ${sortField === field ? 'text-blue-600' : 'text-gray-400'}`} />
+            {sortField === field && (
+              <span className="text-xs text-blue-600">
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </span>
+            )}
+          </>
+        )}
       </div>
-    );
-  }
+    </th>
+  );
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200">
+        <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Resident Name</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clearance Type</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Purpose</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fee</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Request Date</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+            <SortableHeader field="documentNumber">Clearance No.</SortableHeader>
+            <SortableHeader field="residentName">Resident Name</SortableHeader>
+            <SortableHeader field="clearanceType">Clearance Type</SortableHeader>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              Purpose
+            </th>
+            <SortableHeader field="feeAmount">Fee</SortableHeader>
+            <SortableHeader field="status">Status</SortableHeader>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
-          {clearances.map((clearance) => (
-            <tr key={clearance.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 dark:bg-gray-700/50 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                {clearance.documentNumber}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{clearance.residentName}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full">
-                  {clearance.clearanceType}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{clearance.purpose}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
-                ₱{clearance.feeAmount.toFixed(2)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(clearance.status)}
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(clearance.status)}`}>
-                    {clearance.status}
-                  </span>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{clearance.requestDate}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => onView(clearance)}
-                    className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
-                    title="View Certificate"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onEdit(clearance)}
-                    className="p-1 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  {clearance.status === 'Released' && (
-                    <button 
-                      onClick={() => onPrint(clearance)}
-                      className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:bg-green-900/30 rounded" 
-                      title="Print"
-                    >
-                      <Printer className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => onDelete(clearance)}
-                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          {clearances.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                No clearances found
               </td>
             </tr>
-          ))}
+          ) : (
+            clearances.map((clearance) => (
+              <tr key={clearance.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                  {clearance.documentNumber}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {clearance.residentName}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {clearance.clearanceType}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {clearance.purpose}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  ₱{clearance.feeAmount.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(clearance.status)}
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(clearance.status)}`}>
+                      {clearance.status}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onView(clearance)}
+                      className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onEdit(clearance)}
+                      className="p-1 text-orange-600 hover:text-orange-800 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    {clearance.status === 'Released' && (
+                      <button 
+                        onClick={() => onPrint(clearance)}
+                        className="p-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded" 
+                        title="Print"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onDelete(clearance)}
+                      className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

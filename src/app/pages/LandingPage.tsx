@@ -377,8 +377,8 @@ export default function LandingPage({ onEnterSystem, isAuthenticated = false, us
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">BRMS</h1>
-              <p className="text-xs text-muted">Barangay Records Management</p>
+              <h1 className="text-xl font-bold text-white">BMS</h1>
+              <p className="text-xs text-muted">Barangay Management</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
