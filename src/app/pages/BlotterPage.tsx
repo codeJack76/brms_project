@@ -13,10 +13,60 @@ import {
   BlotterStatistics,
 } from '@/components/blotter';
 
-export default function BlotterPage() {
+// Demo blotter data
+const demoBlotterRecords: BlotterRecord[] = [
+  {
+    id: '1',
+    caseNumber: 'BLT-2024-001',
+    complainant: 'Juan Dela Cruz',
+    respondent: 'Unknown',
+    incidentType: 'Noise Complaint',
+    incidentDate: '2024-11-20',
+    location: '123 Rizal Street',
+    status: 'resolved',
+    filedDate: '2024-11-20',
+    assignedTo: 'Officer Garcia',
+    remarks: 'Verbal warning issued. Both parties agreed to maintain peace.',
+    created_at: '2024-11-20T23:00:00Z',
+  },
+  {
+    id: '2',
+    caseNumber: 'BLT-2024-002',
+    complainant: 'Maria Santos',
+    respondent: 'Pedro Reyes',
+    incidentType: 'Physical Altercation',
+    incidentDate: '2024-11-22',
+    location: 'Public Market',
+    status: 'under_investigation',
+    filedDate: '2024-11-22',
+    assignedTo: 'Officer Lopez',
+    remarks: 'Statements taken from both parties. Scheduled for mediation.',
+    created_at: '2024-11-22T16:00:00Z',
+  },
+  {
+    id: '3',
+    caseNumber: 'BLT-2024-003',
+    complainant: 'Roberto Fernandez',
+    respondent: 'Carlos Mendoza',
+    incidentType: 'Property Dispute',
+    incidentDate: '2024-11-25',
+    location: '321 Luna Street',
+    status: 'pending',
+    filedDate: '2024-11-25',
+    assignedTo: '',
+    remarks: 'Initial hearing scheduled for next week.',
+    created_at: '2024-11-25T09:30:00Z',
+  },
+];
+
+interface BlotterPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function BlotterPage({ isDemoMode = false }: BlotterPageProps) {
   // State
-  const [records, setRecords] = useState<BlotterRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [records, setRecords] = useState<BlotterRecord[]>(isDemoMode ? demoBlotterRecords : []);
+  const [isLoading, setIsLoading] = useState(!isDemoMode);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -44,6 +94,11 @@ export default function BlotterPage() {
 
   // Fetch blotter records
   const fetchRecords = async () => {
+    if (isDemoMode) {
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const response = await fetch('/api/blotter');

@@ -278,14 +278,14 @@ export default function App() {
       </aside>
 
       <main className="flex-1 overflow-auto">
-        {currentPage === 'dashboard' && <Dashboard onNavigate={setCurrentPage} />}
-        {currentPage === 'residents' && <ResidentsPage />}
-        {currentPage === 'documents' && <DocumentsPage />}
-        {currentPage === 'clearances' && <ClearancesPage />}
-        {currentPage === 'blotter' && <BlotterPage />}
-        {currentPage === 'financial' && <FinancialPage />}
-        {currentPage === 'reports' && <ReportsPage />}
-        {currentPage === 'settings' && <SettingsPage userRole={userRole} />}
+        {currentPage === 'dashboard' && <Dashboard onNavigate={setCurrentPage} isDemoMode={isDemoMode} />}
+        {currentPage === 'residents' && <ResidentsPage isDemoMode={isDemoMode} />}
+        {currentPage === 'documents' && <DocumentsPage isDemoMode={isDemoMode} />}
+        {currentPage === 'clearances' && <ClearancesPage isDemoMode={isDemoMode} />}
+        {currentPage === 'blotter' && <BlotterPage isDemoMode={isDemoMode} />}
+        {currentPage === 'financial' && <FinancialPage isDemoMode={isDemoMode} />}
+        {currentPage === 'reports' && <ReportsPage isDemoMode={isDemoMode} />}
+        {currentPage === 'settings' && <SettingsPage userRole={userRole} isDemoMode={isDemoMode} />}
         {currentPage === 'superadmin' && <SuperadminPage />}
       </main>
       </div>

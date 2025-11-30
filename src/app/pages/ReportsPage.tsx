@@ -36,14 +36,26 @@ interface GeneratedReport {
   totalRecords: number;
 }
 
-export default function ReportsPage() {
+// Demo data for reports
+const demoCounts: ReportCounts = {
+  residents: { total: 1247, thisMonth: 12 },
+  clearances: { total: 156, thisMonth: 23 },
+  blotter: { total: 23, thisMonth: 3 },
+  financial: { total: 89, thisMonth: 15 },
+};
+
+interface ReportsPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function ReportsPage({ isDemoMode = false }: ReportsPageProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [selectedReport, setSelectedReport] = useState('residents');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  const [counts, setCounts] = useState<ReportCounts | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState<ReportCounts | null>(isDemoMode ? demoCounts : null);
+  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
 
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
@@ -52,6 +64,11 @@ export default function ReportsPage() {
 
   // Fetch report counts
   const fetchCounts = useCallback(async () => {
+    if (isDemoMode) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       const response = await fetch('/api/reports');
@@ -64,7 +81,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isDemoMode]);
 
   useEffect(() => {
     fetchCounts();

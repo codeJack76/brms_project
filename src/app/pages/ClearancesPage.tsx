@@ -97,9 +97,89 @@ interface PurposeBreakdown {
 
 type ModalMode = 'view' | 'create' | 'edit' | 'delete' | 'certificate';
 
-export default function ClearancesPage() {
-  const [clearances, setClearances] = useState<Clearance[]>([]);
-  const [statistics, setStatistics] = useState<Statistics>({
+// Demo clearances data
+const demoClearancesData: Clearance[] = [
+  {
+    id: '1',
+    clearanceNumber: 'CLR-2024-001',
+    residentName: 'Juan Santos Dela Cruz',
+    typeOfClearance: 'Barangay Clearance',
+    purposeOfClearance: 'Employment',
+    dateRequested: '2024-11-25',
+    dateApproved: '2024-11-25',
+    dateReleased: '2024-11-25',
+    status: 'Released',
+    clearanceFeePaid: true,
+    amountPaid: 50,
+  },
+  {
+    id: '2',
+    clearanceNumber: 'CLR-2024-002',
+    residentName: 'Maria Reyes Dela Cruz',
+    typeOfClearance: 'Barangay Certificate of Residency',
+    purposeOfClearance: 'School Enrollment',
+    dateRequested: '2024-11-26',
+    dateApproved: '2024-11-26',
+    status: 'Approved',
+    clearanceFeePaid: true,
+    amountPaid: 30,
+  },
+  {
+    id: '3',
+    clearanceNumber: 'CLR-2024-003',
+    residentName: 'Ana Lopez Reyes',
+    typeOfClearance: 'Barangay Business Clearance',
+    purposeOfClearance: 'Business Registration',
+    dateRequested: '2024-11-28',
+    status: 'Pending',
+    clearanceFeePaid: false,
+    amountPaid: 0,
+  },
+  {
+    id: '4',
+    clearanceNumber: 'CLR-2024-004',
+    residentName: 'Roberto Cruz Fernandez',
+    typeOfClearance: 'Barangay Clearance',
+    purposeOfClearance: 'Loan Application',
+    dateRequested: '2024-11-27',
+    dateApproved: '2024-11-27',
+    dateReleased: '2024-11-27',
+    status: 'Released',
+    clearanceFeePaid: true,
+    amountPaid: 50,
+  },
+  {
+    id: '5',
+    clearanceNumber: 'CLR-2024-005',
+    residentName: 'Pedro Garcia Santos Jr.',
+    typeOfClearance: 'Barangay Indigency',
+    purposeOfClearance: 'Medical Assistance',
+    dateRequested: '2024-11-28',
+    dateApproved: '2024-11-28',
+    dateReleased: '2024-11-28',
+    status: 'Released',
+    clearanceFeePaid: true,
+    amountPaid: 0,
+  },
+];
+
+const demoStatistics: Statistics = {
+  totalClearances: 156,
+  totalPending: 8,
+  totalApproved: 10,
+  totalReleased: 138,
+  totalPaid: 148,
+  totalUnpaid: 8,
+  totalRevenue: 15680,
+};
+
+interface ClearancesPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function ClearancesPage({ isDemoMode = false }: ClearancesPageProps) {
+  const [clearances, setClearances] = useState<Clearance[]>(isDemoMode ? demoClearancesData : []);
+  const [statistics, setStatistics] = useState<Statistics>(isDemoMode ? demoStatistics : {
     totalClearances: 0,
     totalPending: 0,
     totalApproved: 0,
@@ -139,6 +219,11 @@ export default function ClearancesPage() {
 
   // Fetch clearances from API
   const fetchClearances = async () => {
+    if (isDemoMode) {
+      setFetchingClearances(false);
+      return;
+    }
+    
     setFetchingClearances(true);
     try {
       const response = await fetch('/api/clearances');

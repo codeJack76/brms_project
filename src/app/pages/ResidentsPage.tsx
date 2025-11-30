@@ -18,10 +18,22 @@ import {
   DeleteConfirmModal,
   Pagination,
 } from '../../components/residents';
+import { demoResidents } from '@/lib/demoData';
 
-export default function ResidentsPage() {
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+// Convert demo data to match Resident type
+const convertedDemoResidents: Resident[] = demoResidents.map(r => ({
+  ...r,
+  is_active: true,
+  mobile: r.contact_number,
+})) as Resident[];
+
+interface ResidentsPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function ResidentsPage({ isDemoMode = false }: ResidentsPageProps) {
+  const [residents, setResidents] = useState<Resident[]>(isDemoMode ? convertedDemoResidents : []);
+  const [isLoading, setIsLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
@@ -39,10 +51,14 @@ export default function ResidentsPage() {
 
   // Fetch residents on mount
   useEffect(() => {
-    fetchResidents();
-  }, []);
+    if (!isDemoMode) {
+      fetchResidents();
+    }
+  }, [isDemoMode]);
 
   const fetchResidents = async () => {
+    if (isDemoMode) return;
+    
     try {
       setIsLoading(true);
       const response = await fetch('/api/residents');

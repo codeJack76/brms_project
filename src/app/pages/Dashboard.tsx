@@ -88,15 +88,75 @@ const formatNumber = (num: number) => {
 
 interface DashboardProps {
   onNavigate?: (page: PageId) => void;
+  isDemoMode?: boolean;
 }
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+// Demo data for dashboard
+const demoDashboardData: DashboardData = {
+  user: {
+    name: 'Demo User',
+    role: 'barangay_captain',
+  },
+  stats: {
+    residents: {
+      total: 1247,
+      growth: 3.2,
+      thisMonth: 12,
+    },
+    clearances: {
+      total: 156,
+      pending: 8,
+      approved: 142,
+      released: 138,
+      growth: 5.8,
+      thisMonth: 23,
+    },
+    documents: {
+      total: 89,
+      growth: 2.1,
+      thisMonth: 7,
+    },
+    blotters: {
+      total: 23,
+      active: 5,
+      change: -12,
+      thisMonth: 3,
+    },
+    financial: {
+      totalIncome: 245680,
+      totalExpenses: 189500,
+      netIncome: 56180,
+      thisMonthIncome: 15680,
+      thisMonthExpenses: 12350,
+    },
+  },
+  demographics: {
+    male: 623,
+    female: 624,
+    malePercent: 49.96,
+    femalePercent: 50.04,
+    ageDistribution: {
+      minors: 312,
+      adults: 846,
+      seniors: 89,
+    },
+  },
+};
+
+export default function Dashboard({ onNavigate, isDemoMode = false }: DashboardProps) {
+  const [data, setData] = useState<DashboardData | null>(isDemoMode ? demoDashboardData : null);
+  const [loading, setLoading] = useState(!isDemoMode);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchDashboardData = async (isRefresh = false) => {
+    // Skip API call in demo mode
+    if (isDemoMode) {
+      setData(demoDashboardData);
+      setLoading(false);
+      return;
+    }
+    
     try {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
@@ -118,10 +178,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh every 5 minutes
-    const interval = setInterval(() => fetchDashboardData(true), 300000);
-    return () => clearInterval(interval);
-  }, []);
+    // Auto-refresh every 5 minutes (not in demo mode)
+    if (!isDemoMode) {
+      const interval = setInterval(() => fetchDashboardData(true), 300000);
+      return () => clearInterval(interval);
+    }
+  }, [isDemoMode]);
 
   if (loading) {
     return (

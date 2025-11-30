@@ -19,10 +19,104 @@ import {
   initialFormData,
 } from '@/components/financial';
 
-export default function FinancialPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+// Demo financial data
+const demoTransactions: Transaction[] = [
+  {
+    id: '1',
+    transactionType: 'income',
+    category: 'Clearance Fees',
+    description: 'Barangay Clearance - Juan Dela Cruz',
+    amount: 50,
+    referenceNumber: 'OR-2024-001',
+    transactionDate: '2024-11-25',
+    status: 'completed',
+    createdAt: '2024-11-25T08:00:00Z',
+  },
+  {
+    id: '2',
+    transactionType: 'income',
+    category: 'Clearance Fees',
+    description: 'Certificate of Residency - Maria Dela Cruz',
+    amount: 30,
+    referenceNumber: 'OR-2024-002',
+    transactionDate: '2024-11-26',
+    status: 'completed',
+    createdAt: '2024-11-26T09:30:00Z',
+  },
+  {
+    id: '3',
+    transactionType: 'expense',
+    category: 'Office Supplies',
+    description: 'Purchase of bond paper and ink',
+    amount: 1500,
+    referenceNumber: 'EXP-2024-001',
+    transactionDate: '2024-11-24',
+    status: 'completed',
+    createdAt: '2024-11-24T10:00:00Z',
+  },
+  {
+    id: '4',
+    transactionType: 'income',
+    category: 'Clearance Fees',
+    description: 'Barangay Clearance - Roberto Fernandez',
+    amount: 50,
+    referenceNumber: 'OR-2024-003',
+    transactionDate: '2024-11-27',
+    status: 'completed',
+    createdAt: '2024-11-27T10:15:00Z',
+  },
+  {
+    id: '5',
+    transactionType: 'expense',
+    category: 'Utilities',
+    description: 'Electric bill for November 2024',
+    amount: 3500,
+    referenceNumber: 'EXP-2024-002',
+    transactionDate: '2024-11-28',
+    status: 'completed',
+    createdAt: '2024-11-28T14:00:00Z',
+  },
+  {
+    id: '6',
+    transactionType: 'income',
+    category: 'Business Permits',
+    description: 'Business Permit Renewal - Sari-sari Store',
+    amount: 500,
+    referenceNumber: 'OR-2024-005',
+    transactionDate: '2024-11-28',
+    status: 'completed',
+    createdAt: '2024-11-28T15:30:00Z',
+  },
+  {
+    id: '7',
+    transactionType: 'expense',
+    category: 'Maintenance',
+    description: 'Barangay Hall cleaning services',
+    amount: 2000,
+    referenceNumber: 'EXP-2024-003',
+    transactionDate: '2024-11-29',
+    status: 'completed',
+    createdAt: '2024-11-29T08:00:00Z',
+  },
+];
+
+const demoStatistics: Statistics = {
+  totalIncome: 245680,
+  totalExpenses: 189500,
+  netIncome: 56180,
+  monthlyIncome: 15680,
+  monthlyExpenses: 12350,
+  pendingTransactions: 3,
+};
+
+interface FinancialPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function FinancialPage({ isDemoMode = false }: FinancialPageProps) {
+  const [transactions, setTransactions] = useState<Transaction[]>(isDemoMode ? demoTransactions : []);
+  const [statistics, setStatistics] = useState<Statistics | null>(isDemoMode ? demoStatistics : null);
+  const [isLoading, setIsLoading] = useState(!isDemoMode);
   const [isSaving, setIsSaving] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +141,11 @@ export default function FinancialPage() {
 
   // Fetch transactions
   const fetchTransactions = async () => {
+    if (isDemoMode) {
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const response = await fetch('/api/financial');
@@ -67,6 +166,8 @@ export default function FinancialPage() {
 
   // Fetch statistics
   const fetchStatistics = async () => {
+    if (isDemoMode) return;
+    
     try {
       const response = await fetch('/api/financial/stats');
       const data = await response.json();

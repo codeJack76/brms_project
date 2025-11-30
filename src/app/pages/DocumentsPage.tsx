@@ -22,11 +22,30 @@ interface StorageStats {
   totalSize: number;
 }
 
-export default function DocumentsPage() {
+// Demo data for documents
+const demoFolders: (BarangayFolder & { document_count?: number })[] = [
+  { id: '1', folder_name: 'Ordinances', barangay_id: 'demo', created_by: 'demo', created_at: '2024-01-01T00:00:00Z', document_count: 5 },
+  { id: '2', folder_name: 'Financial Reports', barangay_id: 'demo', created_by: 'demo', created_at: '2024-01-01T00:00:00Z', document_count: 8 },
+  { id: '3', folder_name: 'Meeting Minutes', barangay_id: 'demo', created_by: 'demo', created_at: '2024-01-01T00:00:00Z', document_count: 12 },
+  { id: '4', folder_name: 'Certificates', barangay_id: 'demo', created_by: 'demo', created_at: '2024-01-01T00:00:00Z', document_count: 3 },
+];
+
+const demoDocuments: BarangayDocument[] = [
+  { id: '1', file_name: 'Barangay Ordinance 2024-001.pdf', file_type: 'application/pdf', file_size: 245000, folder_id: '1', barangay_id: 'demo', file_url: '', uploaded_by: 'demo', uploaded_at: '2024-10-15T08:00:00Z' },
+  { id: '2', file_name: 'Annual Budget Report 2024.xlsx', file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', file_size: 128000, folder_id: '2', barangay_id: 'demo', file_url: '', uploaded_by: 'demo', uploaded_at: '2024-11-01T10:30:00Z' },
+  { id: '3', file_name: 'Assembly Minutes - Nov 2024.docx', file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', file_size: 85000, folder_id: '3', barangay_id: 'demo', file_url: '', uploaded_by: 'demo', uploaded_at: '2024-11-20T14:00:00Z' },
+  { id: '4', file_name: 'Development Plan 2024-2027.pdf', file_type: 'application/pdf', file_size: 1250000, folder_id: '1', barangay_id: 'demo', file_url: '', uploaded_by: 'demo', uploaded_at: '2024-09-01T09:00:00Z' },
+];
+
+interface DocumentsPageProps {
+  isDemoMode?: boolean;
+}
+
+export default function DocumentsPage({ isDemoMode = false }: DocumentsPageProps) {
   // State for folders
-  const [folders, setFolders] = useState<(BarangayFolder & { document_count?: number })[]>([]);
+  const [folders, setFolders] = useState<(BarangayFolder & { document_count?: number })[]>(isDemoMode ? demoFolders : []);
   const [selectedFolder, setSelectedFolder] = useState<BarangayFolder | null>(null);
-  const [isFoldersLoading, setIsFoldersLoading] = useState(true);
+  const [isFoldersLoading, setIsFoldersLoading] = useState(!isDemoMode);
 
   // State for documents
   const [documents, setDocuments] = useState<BarangayDocument[]>([]);
@@ -53,6 +72,16 @@ export default function DocumentsPage() {
 
   // Fetch folders
   const fetchFolders = useCallback(async () => {
+    if (isDemoMode) {
+      setStats({
+        totalFolders: demoFolders.length,
+        totalDocuments: demoFolders.reduce((sum, f) => sum + (f.document_count || 0), 0),
+        totalSize: 1708000,
+      });
+      setIsFoldersLoading(false);
+      return;
+    }
+    
     try {
       setIsFoldersLoading(true);
       const response = await fetch('/api/documents/folders');
