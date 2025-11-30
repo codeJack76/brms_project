@@ -9,7 +9,7 @@ interface SettingsPageProps {
 }
 
 export default function SettingsPage({ userRole = 'staff', isDemoMode = false }: SettingsPageProps) {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState(isDemoMode ? 'profile' : 'general');
   
   // Barangay settings
   const [barangayId, setBarangayId] = useState('');
