@@ -21,7 +21,8 @@ export type PageId =
   | 'blotter'
   | 'financial'
   | 'reports'
-  | 'settings';
+  | 'settings'
+  | 'superadmin';
 
 export interface PageConfig {
   id: PageId;
@@ -70,6 +71,11 @@ export const PAGES: Record<PageId, PageConfig> = {
     id: 'settings',
     label: 'Settings',
     description: 'Configure system and user settings'
+  },
+  superadmin: {
+    id: 'superadmin',
+    label: 'System Admin',
+    description: 'Manage barangays, captains, and system settings'
   }
 };
 
@@ -87,7 +93,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PageId[]> = {
     'blotter',
     'financial',
     'reports',
-    'settings'
+    'superadmin'
   ],
   
   // Barangay Captain: Full operational access

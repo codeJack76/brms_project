@@ -16,6 +16,7 @@ import BlotterPage from './pages/BlotterPage';
 import FinancialPage from './pages/FinancialPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import SuperadminPage from './pages/SuperadminPage';
 
 export default function App() {
   const { theme } = useTheme();
@@ -248,6 +249,7 @@ export default function App() {
         {currentPage === 'financial' && <FinancialPage />}
         {currentPage === 'reports' && <ReportsPage />}
         {currentPage === 'settings' && <SettingsPage userRole={userRole} />}
+        {currentPage === 'superadmin' && <SuperadminPage />}
       </main>
     </div>
   );
