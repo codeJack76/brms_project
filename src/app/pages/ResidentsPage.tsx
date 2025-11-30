@@ -32,8 +32,8 @@ interface ResidentsPageProps {
 }
 
 export default function ResidentsPage({ isDemoMode = false }: ResidentsPageProps) {
-  const [residents, setResidents] = useState<Resident[]>(isDemoMode ? convertedDemoResidents : []);
-  const [isLoading, setIsLoading] = useState(!isDemoMode);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
@@ -51,9 +51,13 @@ export default function ResidentsPage({ isDemoMode = false }: ResidentsPageProps
 
   // Fetch residents on mount
   useEffect(() => {
-    if (!isDemoMode) {
-      fetchResidents();
+    if (isDemoMode) {
+      setResidents(convertedDemoResidents);
+      setIsLoading(false);
+      return;
     }
+    
+    fetchResidents();
   }, [isDemoMode]);
 
   const fetchResidents = async () => {

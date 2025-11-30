@@ -12,27 +12,44 @@ export default function SettingsPage({ userRole = 'staff', isDemoMode = false }:
   const [activeTab, setActiveTab] = useState('general');
   
   // Barangay settings
-  const [barangayId, setBarangayId] = useState(isDemoMode ? 'demo-barangay' : '');
-  const [name, setName] = useState(isDemoMode ? 'Barangay San Miguel' : '');
-  const [address, setAddress] = useState(isDemoMode ? '123 Main Street, San Miguel' : '');
-  const [contactNumber, setContactNumber] = useState(isDemoMode ? '(02) 8123-4567' : '');
-  const [email, setEmail] = useState(isDemoMode ? 'sanmiguel@sample.gov.ph' : '');
-  const [isLoadingBarangay, setIsLoadingBarangay] = useState(!isDemoMode);
+  const [barangayId, setBarangayId] = useState('');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [isLoadingBarangay, setIsLoadingBarangay] = useState(true);
   const [isSavingBarangay, setIsSavingBarangay] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
   const [isEditingBarangay, setIsEditingBarangay] = useState(false);
   
   // Profile settings
-  const [profileName, setProfileName] = useState(isDemoMode ? 'Demo User' : '');
-  const [profileEmail, setProfileEmail] = useState(isDemoMode ? 'demo@brms.example' : '');
-  const [profileRole, setProfileRole] = useState(isDemoMode ? 'barangay_captain' : '');
-  const [profilePhone, setProfilePhone] = useState(isDemoMode ? '09171234567' : '');
-  const [profilePosition, setProfilePosition] = useState(isDemoMode ? 'Barangay Captain' : '');
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileRole, setProfileRole] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profilePosition, setProfilePosition] = useState('');
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState('');
   const [profileSaveError, setProfileSaveError] = useState('');
+
+  // Set demo data when isDemoMode changes
+  useEffect(() => {
+    if (isDemoMode) {
+      setBarangayId('demo-barangay');
+      setName('Barangay San Miguel');
+      setAddress('123 Main Street, San Miguel');
+      setContactNumber('(02) 8123-4567');
+      setEmail('sanmiguel@sample.gov.ph');
+      setIsLoadingBarangay(false);
+      setProfileName('Demo User');
+      setProfileEmail('demo@brms.example');
+      setProfileRole('barangay_captain');
+      setProfilePhone('09171234567');
+      setProfilePosition('Barangay Captain');
+    }
+  }, [isDemoMode]);
 
   // Admin Users - Invitation Management
   const [inviteEmail, setInviteEmail] = useState('');

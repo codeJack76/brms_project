@@ -27,7 +27,7 @@ const demoBlotterRecords: BlotterRecord[] = [
     filedDate: '2024-11-20',
     assignedTo: 'Officer Garcia',
     remarks: 'Verbal warning issued. Both parties agreed to maintain peace.',
-    created_at: '2024-11-20T23:00:00Z',
+    createdAt: '2024-11-20T23:00:00Z',
   },
   {
     id: '2',
@@ -37,11 +37,11 @@ const demoBlotterRecords: BlotterRecord[] = [
     incidentType: 'Physical Altercation',
     incidentDate: '2024-11-22',
     location: 'Public Market',
-    status: 'under_investigation',
+    status: 'investigating',
     filedDate: '2024-11-22',
     assignedTo: 'Officer Lopez',
     remarks: 'Statements taken from both parties. Scheduled for mediation.',
-    created_at: '2024-11-22T16:00:00Z',
+    createdAt: '2024-11-22T16:00:00Z',
   },
   {
     id: '3',
@@ -55,7 +55,7 @@ const demoBlotterRecords: BlotterRecord[] = [
     filedDate: '2024-11-25',
     assignedTo: '',
     remarks: 'Initial hearing scheduled for next week.',
-    created_at: '2024-11-25T09:30:00Z',
+    createdAt: '2024-11-25T09:30:00Z',
   },
 ];
 
@@ -65,8 +65,16 @@ interface BlotterPageProps {
 
 export default function BlotterPage({ isDemoMode = false }: BlotterPageProps) {
   // State
-  const [records, setRecords] = useState<BlotterRecord[]>(isDemoMode ? demoBlotterRecords : []);
-  const [isLoading, setIsLoading] = useState(!isDemoMode);
+  const [records, setRecords] = useState<BlotterRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Set demo data when isDemoMode changes
+  useEffect(() => {
+    if (isDemoMode) {
+      setRecords(demoBlotterRecords);
+      setIsLoading(false);
+    }
+  }, [isDemoMode]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedType, setSelectedType] = useState('all');

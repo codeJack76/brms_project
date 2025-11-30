@@ -23,80 +23,122 @@ import {
 const demoTransactions: Transaction[] = [
   {
     id: '1',
-    transactionType: 'income',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-001',
+    type: 'income',
     category: 'Clearance Fees',
     description: 'Barangay Clearance - Juan Dela Cruz',
     amount: 50,
+    paidBy: 'Juan Dela Cruz',
+    receivedBy: 'Treasurer',
     referenceNumber: 'OR-2024-001',
     transactionDate: '2024-11-25',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-25T08:00:00Z',
+    updatedAt: '2024-11-25T08:00:00Z',
   },
   {
     id: '2',
-    transactionType: 'income',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-002',
+    type: 'income',
     category: 'Clearance Fees',
     description: 'Certificate of Residency - Maria Dela Cruz',
     amount: 30,
+    paidBy: 'Maria Dela Cruz',
+    receivedBy: 'Treasurer',
     referenceNumber: 'OR-2024-002',
     transactionDate: '2024-11-26',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-26T09:30:00Z',
+    updatedAt: '2024-11-26T09:30:00Z',
   },
   {
     id: '3',
-    transactionType: 'expense',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-003',
+    type: 'expense',
     category: 'Office Supplies',
     description: 'Purchase of bond paper and ink',
     amount: 1500,
+    paidBy: null,
+    receivedBy: 'Office Supplies Store',
     referenceNumber: 'EXP-2024-001',
     transactionDate: '2024-11-24',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-24T10:00:00Z',
+    updatedAt: '2024-11-24T10:00:00Z',
   },
   {
     id: '4',
-    transactionType: 'income',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-004',
+    type: 'income',
     category: 'Clearance Fees',
     description: 'Barangay Clearance - Roberto Fernandez',
     amount: 50,
+    paidBy: 'Roberto Fernandez',
+    receivedBy: 'Treasurer',
     referenceNumber: 'OR-2024-003',
     transactionDate: '2024-11-27',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-27T10:15:00Z',
+    updatedAt: '2024-11-27T10:15:00Z',
   },
   {
     id: '5',
-    transactionType: 'expense',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-005',
+    type: 'expense',
     category: 'Utilities',
     description: 'Electric bill for November 2024',
     amount: 3500,
+    paidBy: null,
+    receivedBy: 'Meralco',
     referenceNumber: 'EXP-2024-002',
     transactionDate: '2024-11-28',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-28T14:00:00Z',
+    updatedAt: '2024-11-28T14:00:00Z',
   },
   {
     id: '6',
-    transactionType: 'income',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-006',
+    type: 'income',
     category: 'Business Permits',
     description: 'Business Permit Renewal - Sari-sari Store',
     amount: 500,
+    paidBy: 'Store Owner',
+    receivedBy: 'Treasurer',
     referenceNumber: 'OR-2024-005',
     transactionDate: '2024-11-28',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-28T15:30:00Z',
+    updatedAt: '2024-11-28T15:30:00Z',
   },
   {
     id: '7',
-    transactionType: 'expense',
+    barangayId: 'demo-barangay',
+    transactionNumber: 'TXN-2024-007',
+    type: 'expense',
     category: 'Maintenance',
     description: 'Barangay Hall cleaning services',
     amount: 2000,
+    paidBy: null,
+    receivedBy: 'Cleaning Services',
     referenceNumber: 'EXP-2024-003',
     transactionDate: '2024-11-29',
     status: 'completed',
+    notes: null,
     createdAt: '2024-11-29T08:00:00Z',
+    updatedAt: '2024-11-29T08:00:00Z',
   },
 ];
 
@@ -104,9 +146,16 @@ const demoStatistics: Statistics = {
   totalIncome: 245680,
   totalExpenses: 189500,
   netIncome: 56180,
-  monthlyIncome: 15680,
-  monthlyExpenses: 12350,
-  pendingTransactions: 3,
+  thisMonthIncome: 15680,
+  thisMonthExpenses: 12350,
+  thisMonthNet: 3330,
+  incomeChange: 8.5,
+  expenseChange: 5.2,
+  netChange: 12.3,
+  pendingCount: 3,
+  completedCount: 45,
+  cancelledCount: 2,
+  totalTransactions: 50,
 };
 
 interface FinancialPageProps {
@@ -114,9 +163,19 @@ interface FinancialPageProps {
 }
 
 export default function FinancialPage({ isDemoMode = false }: FinancialPageProps) {
-  const [transactions, setTransactions] = useState<Transaction[]>(isDemoMode ? demoTransactions : []);
-  const [statistics, setStatistics] = useState<Statistics | null>(isDemoMode ? demoStatistics : null);
-  const [isLoading, setIsLoading] = useState(!isDemoMode);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Set demo data when isDemoMode changes
+  useEffect(() => {
+    if (isDemoMode) {
+      setTransactions(demoTransactions);
+      setStatistics(demoStatistics);
+      setIsLoading(false);
+    }
+  }, [isDemoMode]);
+  
   const [isSaving, setIsSaving] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');

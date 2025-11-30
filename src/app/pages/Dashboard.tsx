@@ -144,19 +144,19 @@ const demoDashboardData: DashboardData = {
 };
 
 export default function Dashboard({ onNavigate, isDemoMode = false }: DashboardProps) {
-  const [data, setData] = useState<DashboardData | null>(isDemoMode ? demoDashboardData : null);
-  const [loading, setLoading] = useState(!isDemoMode);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Fetch dashboard data function
   const fetchDashboardData = async (isRefresh = false) => {
-    // Skip API call in demo mode
     if (isDemoMode) {
       setData(demoDashboardData);
       setLoading(false);
       return;
     }
-    
+
     try {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
@@ -178,7 +178,8 @@ export default function Dashboard({ onNavigate, isDemoMode = false }: DashboardP
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh every 5 minutes (not in demo mode)
+    
+    // Auto-refresh every 5 minutes (only if not demo mode)
     if (!isDemoMode) {
       const interval = setInterval(() => fetchDashboardData(true), 300000);
       return () => clearInterval(interval);

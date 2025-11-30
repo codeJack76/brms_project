@@ -54,13 +54,21 @@ export default function ReportsPage({ isDemoMode = false }: ReportsPageProps) {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  const [counts, setCounts] = useState<ReportCounts | null>(isDemoMode ? demoCounts : null);
-  const [loading, setLoading] = useState(!isDemoMode);
+  const [counts, setCounts] = useState<ReportCounts | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Set demo data when isDemoMode changes
+  useEffect(() => {
+    if (isDemoMode) {
+      setCounts(demoCounts);
+      setLoading(false);
+    }
+  }, [isDemoMode]);
 
   // Fetch report counts
   const fetchCounts = useCallback(async () => {

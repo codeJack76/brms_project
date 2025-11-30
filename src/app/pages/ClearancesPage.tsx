@@ -178,8 +178,8 @@ interface ClearancesPageProps {
 }
 
 export default function ClearancesPage({ isDemoMode = false }: ClearancesPageProps) {
-  const [clearances, setClearances] = useState<Clearance[]>(isDemoMode ? demoClearancesData : []);
-  const [statistics, setStatistics] = useState<Statistics>(isDemoMode ? demoStatistics : {
+  const [clearances, setClearances] = useState<Clearance[]>([]);
+  const [statistics, setStatistics] = useState<Statistics>({
     totalClearances: 0,
     totalPending: 0,
     totalApproved: 0,
@@ -216,6 +216,15 @@ export default function ClearancesPage({ isDemoMode = false }: ClearancesPagePro
   const [showResidentDropdown, setShowResidentDropdown] = useState(false);
   const [searchingResidents, setSearchingResidents] = useState(false);
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+
+  // Initialize demo data
+  useEffect(() => {
+    if (isDemoMode) {
+      setClearances(demoClearancesData);
+      setStatistics(demoStatistics);
+      setFetchingClearances(false);
+    }
+  }, [isDemoMode]);
 
   // Fetch clearances from API
   const fetchClearances = async () => {

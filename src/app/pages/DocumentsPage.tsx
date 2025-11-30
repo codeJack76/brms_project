@@ -43,9 +43,9 @@ interface DocumentsPageProps {
 
 export default function DocumentsPage({ isDemoMode = false }: DocumentsPageProps) {
   // State for folders
-  const [folders, setFolders] = useState<(BarangayFolder & { document_count?: number })[]>(isDemoMode ? demoFolders : []);
+  const [folders, setFolders] = useState<(BarangayFolder & { document_count?: number })[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<BarangayFolder | null>(null);
-  const [isFoldersLoading, setIsFoldersLoading] = useState(!isDemoMode);
+  const [isFoldersLoading, setIsFoldersLoading] = useState(true);
 
   // State for documents
   const [documents, setDocuments] = useState<BarangayDocument[]>([]);
@@ -69,6 +69,19 @@ export default function DocumentsPage({ isDemoMode = false }: DocumentsPageProps
     totalDocuments: 0,
     totalSize: 0,
   });
+
+  // Set demo data when isDemoMode changes
+  useEffect(() => {
+    if (isDemoMode) {
+      setFolders(demoFolders);
+      setStats({
+        totalFolders: demoFolders.length,
+        totalDocuments: demoFolders.reduce((sum, f) => sum + (f.document_count || 0), 0),
+        totalSize: 1708000,
+      });
+      setIsFoldersLoading(false);
+    }
+  }, [isDemoMode]);
 
   // Fetch folders
   const fetchFolders = useCallback(async () => {
