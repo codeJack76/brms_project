@@ -9,9 +9,10 @@ interface LandingPageProps {
   isAuthenticated?: boolean;
   userName?: string;
   onShowSignup?: () => void;
+  onStartDemo?: () => void;
 }
 
-export default function LandingPage({ onEnterSystem, isAuthenticated = false, userName, onShowSignup }: LandingPageProps) {
+export default function LandingPage({ onEnterSystem, isAuthenticated = false, userName, onShowSignup, onStartDemo }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -388,6 +389,16 @@ export default function LandingPage({ onEnterSystem, isAuthenticated = false, us
             
             {!isAuthenticated && (
               <>
+                {/* Try Demo Button */}
+                <button
+                  onClick={() => {
+                    if (onStartDemo) onStartDemo();
+                  }}
+                  className="px-6 py-2 text-muted hover:text-white transition-all"
+                >
+                  Try Demo
+                </button>
+                
                 {/* Sign Up Button */}
                 <button
                   onClick={() => {
@@ -450,12 +461,23 @@ export default function LandingPage({ onEnterSystem, isAuthenticated = false, us
             {userName && <span className="text-sm opacity-90">({userName})</span>}
           </button>
         ) : (
-          <button
-            onClick={() => handleGetStarted()}
-            className="px-8 py-4 bg-[linear-gradient(90deg,#06b6d4,#3b82f6)] text-white rounded-lg hover:brightness-105 transition-all text-lg font-semibold shadow-lg hover:shadow-xl"
-          >
-            Login to System
-          </button>
+          <>
+            <button
+              onClick={() => handleGetStarted()}
+              className="px-8 py-4 bg-[linear-gradient(90deg,#06b6d4,#3b82f6)] text-white rounded-lg hover:brightness-105 transition-all text-lg font-semibold shadow-lg hover:shadow-xl"
+            >
+              Login to System
+            </button>
+            <button
+              onClick={() => {
+                if (onStartDemo) onStartDemo();
+              }}
+              className="px-8 py-4 bg-[linear-gradient(90deg,#8b5cf6,#6366f1)] text-white rounded-lg hover:brightness-105 transition-all text-lg font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
+            >
+              <User className="w-5 h-5" />
+              Try Demo
+            </button>
+          </>
         )}
         <a
           href="#features"

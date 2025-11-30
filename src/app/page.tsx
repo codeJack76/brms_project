@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, ChevronDown, LogOut, Home } from 'lucide-react';
+import { User, ChevronDown, LogOut, Home, Play, AlertTriangle } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 import { hasPageAccess, getAccessiblePages, getDefaultPage, PageId } from '@/lib/rbac';
 
@@ -26,6 +26,7 @@ export default function App() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [needsBarangaySetup, setNeedsBarangaySetup] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   
   // User data state
   const [userEmail, setUserEmail] = useState('demo@barangay.local');
@@ -117,6 +118,16 @@ export default function App() {
 
   // Handle logout
   const handleLogout = async () => {
+    // If in demo mode, just exit to landing
+    if (isDemoMode) {
+      setShowDashboard(false);
+      setIsDemoMode(false);
+      setUserName('Demo Admin');
+      setUserEmail('demo@barangay.local');
+      setUserRole('barangay_captain');
+      return;
+    }
+    
     try {
       // Clear backend session and redirect to Auth0 logout
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -130,6 +141,16 @@ export default function App() {
       setIsAuthenticated(false);
       window.location.href = '/';
     }
+  };
+
+  // Handle demo mode
+  const handleStartDemo = () => {
+    setIsDemoMode(true);
+    setUserName('Demo User');
+    setUserEmail('demo@brms.example');
+    setUserRole('barangay_captain');
+    setCurrentPage('dashboard');
+    setShowDashboard(true);
   };
 
   // If showing signup page
@@ -150,13 +171,29 @@ export default function App() {
         isAuthenticated={isAuthenticated}
         userName={userName}
         onShowSignup={() => setShowSignup(true)}
+        onStartDemo={handleStartDemo}
       />
     );
   }
 
   // Main application layout with sidebar
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Demo Mode Banner */}
+      {isDemoMode && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 flex items-center justify-center gap-3 text-sm">
+          <Play className="w-4 h-4" />
+          <span><strong>Demo Mode</strong> - You're exploring BRMS with sample data. Some features are limited.</span>
+          <button
+            onClick={handleLogout}
+            className="ml-4 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs font-medium transition-colors"
+          >
+            Exit Demo
+          </button>
+        </div>
+      )}
+      
+      <div className="flex flex-1 overflow-hidden">
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-xl font-bold text-gray-800 dark:text-white">BRMS</h1>
@@ -251,6 +288,7 @@ export default function App() {
         {currentPage === 'settings' && <SettingsPage userRole={userRole} />}
         {currentPage === 'superadmin' && <SuperadminPage />}
       </main>
+      </div>
     </div>
   );
 }
